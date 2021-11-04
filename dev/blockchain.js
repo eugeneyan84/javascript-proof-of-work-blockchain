@@ -1,7 +1,7 @@
 function Blockchain() {
     this.chain = []; // all mined blocks will be stored in the chain
     this.newTxns = []; // to contain all new txns before placed into a block for mining
-}
+};
 
 Blockchain.prototype.createNewBlock = function(nonce, previousHash, hash) {
     const newBlock = {
@@ -17,6 +17,10 @@ Blockchain.prototype.createNewBlock = function(nonce, previousHash, hash) {
     this.chain.push(newBlock);
 
     return newBlock;
-}
+};
+
+Blockchain.prototype.getLastBlock = function() {
+    return this.chain[this.chain.length-1];
+};
 
 module.exports = Blockchain;
