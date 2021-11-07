@@ -79,7 +79,7 @@ app.post("/register-and-broadcast", (req, res) => {
   console.log(
     `[register-and-broadcast] Building registration request(s) for the existing ${bc.nodeNetwork.length} node(s) in network`
   );
-  bc.nodeNetwork.forEach((x) => {
+  bc.nodeNetwork.filter(x => x !== newNodeUrl).forEach((x) => {
     const reqOptions = {
       uri: x + "/register",
       method: "POST",
@@ -103,7 +103,7 @@ app.post("/register-and-broadcast", (req, res) => {
       uri: newNodeUrl + "/bulk-register",
       method: "POST",
       body: {
-        allNetworkNodes: [...bc.nodeNetwork, bc.currentNodeUrl],
+        allNetworkNodes: [...bc.nodeNetwork, bc.currentNodeUrl].filter(x => x !== newNodeUrl)
       },
       json: true,
     };
