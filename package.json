@@ -5,13 +5,19 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --watch src -e js src/api.js"
+    "bc_node1": "nodemon --watch src -e js src/bcNode.js 5001 http://localhost:5001",
+    "bc_node2": "nodemon --watch src -e js src/bcNode.js 5002 http://localhost:5002",
+    "bc_node3": "nodemon --watch src -e js src/bcNode.js 5003 http://localhost:5003",
+    "bc_node4": "nodemon --watch src -e js src/bcNode.js 5004 http://localhost:5004",
+    "bc_node5": "nodemon --watch src -e js src/bcNode.js 5005 http://localhost:5005"
   },
   "author": "eugene_yan",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
     "nodemon": "^2.0.14",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6",
     "sha256": "^0.2.0",
     "uuid": "^8.3.2"
   }
