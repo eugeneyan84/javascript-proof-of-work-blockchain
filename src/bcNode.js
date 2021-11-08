@@ -22,12 +22,46 @@ app.get("/blockchain", (req, res) => {
 });
 
 app.post("/transaction", (req, res) => {
-  const blockIndex = bc.createNewTxn(
+  const txn = req.body;
+  const blockIndex = bc.addTxn(txn);
+  console.log(`[transaction] Transaction (txnId: ${txn.txnId}) received and added to pending list. Returned block index: ${blockIndex}`);
+  res.json({
+    sender: nodeAddress,
+    status: `Transaction (txnId: ${txn.txnId}) received will be added to block ${blockIndex}`,
+  });
+});
+
+app.post("/transaction/broadcast", (req, res) => {
+  const newTxn = bc.createNewTxn(
     req.body.amount,
     req.body.sender,
     req.body.recipient
   );
-  res.json({ blockIndex: blockIndex });
+  console.log("[transaction/broadcast] New transaction created.");
+  bc.addTxn(newTxn);
+  console.log("[transaction/broadcast] New transaction added to pending list.");
+  const promises = [];
+  bc.nodeNetwork.forEach((x) => {
+    const reqOptions = {
+      uri: x + "/transaction",
+      method: "POST",
+      body: newTxn,
+      json: true,
+    };
+    promises.push(reqPromise(reqOptions));
+  });
+  console.log(
+    `[transaction/broadcast] Number of txn-broadcast request(s) created: ${promises.length}`
+  );
+  Promise.all(promises).then((resp) => {
+    console.log(
+      `[transaction/broadcast] All txn-broadcast API calls executed.`
+    );
+    res.json({
+      sender: nodeAddress,
+      status: "Transaction successfully created and broadcasted to network",
+    });
+  });
 });
 
 app.get("/mine", (req, res) => {
@@ -79,18 +113,20 @@ app.post("/register-and-broadcast", (req, res) => {
   console.log(
     `[register-and-broadcast] Building registration request(s) for the existing ${bc.nodeNetwork.length} node(s) in network`
   );
-  bc.nodeNetwork.filter(x => x !== newNodeUrl).forEach((x) => {
-    const reqOptions = {
-      uri: x + "/register",
-      method: "POST",
-      body: { newNodeUrl: newNodeUrl },
-      json: true,
-    };
-    console.log(
-      `[register-and-broadcast] Current reqOptions: ${reqOptions.uri}, ${reqOptions.method}`
-    );
-    promises.push(reqPromise(reqOptions));
-  });
+  bc.nodeNetwork
+    .filter((x) => x !== newNodeUrl)
+    .forEach((x) => {
+      const reqOptions = {
+        uri: x + "/register",
+        method: "POST",
+        body: { newNodeUrl: newNodeUrl },
+        json: true,
+      };
+      console.log(
+        `[register-and-broadcast] Current reqOptions: ${reqOptions.uri}, ${reqOptions.method}`
+      );
+      promises.push(reqPromise(reqOptions));
+    });
 
   // execute the API call built from previous step, then build a bulk-registration request
   console.log(`[register-and-broadcast] Executing registration broadcast`);
@@ -103,11 +139,15 @@ app.post("/register-and-broadcast", (req, res) => {
       uri: newNodeUrl + "/bulk-register",
       method: "POST",
       body: {
-        allNetworkNodes: [...bc.nodeNetwork, bc.currentNodeUrl].filter(x => x !== newNodeUrl)
+        allNetworkNodes: [...bc.nodeNetwork, bc.currentNodeUrl].filter(
+          (x) => x !== newNodeUrl
+        ),
       },
       json: true,
     };
-    console.log(`[register-and-broadcast] bulkOptions.body.allNetworkNodes: ${bulkOptions.body.allNetworkNodes.length}`);
+    console.log(
+      `[register-and-broadcast] bulkOptions.body.allNetworkNodes: ${bulkOptions.body.allNetworkNodes.length}`
+    );
 
     // make bulk-registration API call to new node, then return a response
     console.log(`[register-and-broadcast] Executing bulk-registration request`);
@@ -131,17 +171,18 @@ app.post("/register", (req, res) => {
     bc.nodeNetwork.push(newNodeUrl);
     console.log(`[register] Registered new node url ${newNodeUrl}`);
   } else {
-    console.log(
-      `[register] Node url ${newNodeUrl} already exists in network`
-    );
+    console.log(`[register] Node url ${newNodeUrl} already exists in network`);
   }
-  res.json({ sender: nodeAddress, status: `New node (${newNodeUrl}) successfully registered` });
+  res.json({
+    sender: nodeAddress,
+    status: `New node (${newNodeUrl}) successfully registered`,
+  });
 });
 
 app.post("/bulk-register", (req, res) => {
   const nodeUrls = req.body.allNetworkNodes;
   nodeUrls.forEach((x) => {
-    console.log(`[bulk-register] Processing ${x}`)
+    console.log(`[bulk-register] Processing ${x}`);
     if (bc.nodeNetwork.indexOf(x) == -1 && x !== bc.currentNodeUrl) {
       bc.nodeNetwork.push(x);
       console.log(`[bulk-register] Registered new node url ${x}`);
