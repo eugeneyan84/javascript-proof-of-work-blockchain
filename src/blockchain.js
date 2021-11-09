@@ -73,4 +73,43 @@ Blockchain.prototype.mine = function (previousBlockHash, currentBlockData) {
   return nonce;
 };
 
+Blockchain.prototype.validate = function (chain) {
+    let validationResult = true;
+
+    const genesisBlock = chain[0];
+    if(genesisBlock.hash !== '0' || genesisBlock.nonce !== 100 || genesisBlock.previousHash !== '0')
+    {
+        console.log(`[Blockchain.selfValidate] Genesis Block validation failed (hash: ${genesisBlock.hash}, nonce: ${genesisBlock.nonce}, previousHash: ${genesisBlock.previousHash})`);
+        validationResult =  false;
+    } else
+    {
+        console.log(`[Blockchain.selfValidate] Genesis Block validation passed, proceeding to validate the rest of the chain.`);
+        for(var index = 1; index < chain.length; index++)
+        {
+            const currentBlock = chain[index];
+            const previousBlock = chain[index-1];
+    
+            if(currentBlock.previousHash !== previousBlock.hash)
+            {
+                console.log(`[Blockchain.selfValidate] Block (index: ${currentBlock.index}, previousHash: ${currentBlock.previousHash}) previousHash mismatch with previous block (hash: ${previousBlock.hash})`);
+                validationResult =  false;
+                break;
+            }
+    
+            const reconstructedCurrentBlockData = {txns: currentBlock.txns, index: currentBlock.index};
+            const computedHashValue = this.hashBlock(previousBlock.hash, reconstructedCurrentBlockData, currentBlock.nonce);
+            if(computedHashValue.substring(0, 4) !== '0000')
+            {
+                console.log(`[Blockchain.selfValidate] Block (index: ${currentBlock.index}) recomputed hash (${computedHashValue}) failed validation`);
+                validationResult =  false;
+                break;
+            }
+        }
+    }
+
+    console.log(`[Blockchain.selfValidate] Chain validation completed, outcome: ${validationResult}`);
+
+    return validationResult;
+};
+
 module.exports = Blockchain;

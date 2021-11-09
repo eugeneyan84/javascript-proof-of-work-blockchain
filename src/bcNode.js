@@ -272,6 +272,11 @@ app.post("/bulk-register", (req, res) => {
   res.json({ sender: nodeAddress, status: `Bulk registration successful` });
 });
 
+app.get("/self-validate", (req, res) =>{
+  const validationResult = bc.validate(bc.chain);
+  res.json({sender: nodeAddress, status: `Validation outcome: ${validationResult}`});
+});
+
 app.listen(API_PORT, () => {
   console.log(`Listening on port ${API_PORT}...`);
 });
