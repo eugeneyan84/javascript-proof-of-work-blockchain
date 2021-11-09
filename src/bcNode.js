@@ -24,7 +24,9 @@ app.get("/blockchain", (req, res) => {
 app.post("/transaction", (req, res) => {
   const txn = req.body;
   const blockIndex = bc.addTxn(txn);
-  console.log(`[transaction] Transaction (txnId: ${txn.txnId}) received and added to pending list. Returned block index: ${blockIndex}`);
+  console.log(
+    `[transaction] Transaction (txnId: ${txn.txnId}) received and added to pending list. Returned block index: ${blockIndex}`
+  );
   res.json({
     sender: nodeAddress,
     status: `Transaction (txnId: ${txn.txnId}) received will be added to block ${blockIndex}`,
@@ -37,7 +39,7 @@ app.post("/transaction/broadcast", (req, res) => {
     req.body.sender,
     req.body.recipient
   );
-  console.log("[transaction/broadcast] New transaction created.");
+  console.log(`[transaction/broadcast] New transaction created (txnId: ${newTxn.txnId}).`);
   bc.addTxn(newTxn);
   console.log("[transaction/broadcast] New transaction added to pending list.");
   const promises = [];
@@ -69,27 +71,104 @@ app.get("/mine", (req, res) => {
   const previousBlock = bc.getLastBlock();
   // #2: retrieve hash of previous block
   const previousBlockHash = previousBlock["hash"];
+  console.log(`[mine] Hash of previous block: ${previousBlockHash}`);
   // #3: construct new block with current set of pending transactions, plus a new index value (previous index + 1)
   const newBlock = { txns: bc.pendingTxns, index: previousBlock["index"] + 1 };
   // #4: brute force the new nonce out with the previous block's hash from #2, alongside the new block from #3
   const computedNonce = bc.mine(previousBlockHash, newBlock);
-  console.log(`Computed nonce: ${computedNonce}`);
+  console.log(`[mine] Computed nonce: ${computedNonce}`);
   // #5: with the new nonce, derive the hash value of the combined previous block hash (#2), new block (#3) and new nonce (#4)
   const newBlockHash = bc.hashBlock(previousBlockHash, newBlock, computedNonce);
-  console.log(`Computed new block hash: ${newBlockHash}`);
+  console.log(`[mine] Computed new block hash: ${newBlockHash}`);
   // #6: attach new block to the chain
   const finalisedBlock = bc.createNewBlock(
     computedNonce,
     previousBlockHash,
     newBlockHash
   );
+  console.log(
+    `[mine] Attached new block (hash: ${newBlockHash}) to curent chain.`
+  );
   // #7: reward node for successfully mining new block
-  bc.createNewTxn(2, "00", nodeAddress);
 
-  res.json({
-    status: "New block successfully mined.",
-    resultBlock: finalisedBlock,
+  const promises = [];
+  bc.nodeNetwork.forEach((x) => {
+    const reqOptions = {
+      uri: x + "/add-block",
+      method: "POST",
+      body: { newBlock: finalisedBlock },
+      json: true,
+    };
+    promises.push(reqPromise(reqOptions));
   });
+  console.log(
+    `[mine] Created ${promises.length} block-broadcast request(s) for execution.`
+  );
+  Promise.all(promises)
+    .then((resp) => {
+      console.log(
+        `[mine] All block-broadcast request(s) sent, creating reward-transaction-creation-and-broadcast request.`
+      );
+      const rewardTxnReqOptions = {
+        uri: bc.currentNodeUrl + "/transaction/broadcast",
+        method: "POST",
+        body: {
+          amount: 2,
+          sender: "00",
+          recipient: nodeAddress,
+        },
+        json: true,
+      };
+      return reqPromise(rewardTxnReqOptions);
+    })
+    .then((resp) => {
+      console.log(
+        `[mine] reward-transaction-creation-and-broadcast request sent.`
+      );
+      res.json({
+        status: "New block successfully mined and broadcast to network.",
+        resultBlock: finalisedBlock,
+      });
+    });
+});
+
+app.post("/add-block", (req, res) => {
+  // get new block
+  const newBlock = req.body.newBlock;
+  console.log(`[add-block] New block received (hash: ${newBlock.hash})`);
+  // retrieve last block in current node's chain
+  const lastBlock = bc.getLastBlock();
+
+  console.log(`[add-block] newBlock.previousHash: ${newBlock.previousHash}`);
+  console.log(`[add-block]        lastBlock.hash: ${lastBlock.hash}`);
+  console.log(`[add-block]  newBlock.index: ${newBlock.index}`);
+  console.log(`[add-block] lastBlock.index: ${lastBlock.index}`);
+
+  // if previous block's hash matches current block's previous-hash value,
+  // and current block's index matches previous block's index + 1, then push
+  // new block into chain
+  if (
+    newBlock.previousHash === lastBlock.hash &&
+    newBlock.index === lastBlock.index + 1
+  ) {
+    console.log(
+      `[add-block] Verification passed, new block (hash: ${newBlock.hash}) pushed into chain`
+    );
+    bc.chain.push(newBlock);
+    bc.pendingTxns = [];
+    res.json({
+      sender: nodeAddress,
+      status: `New block received and pushed into chain`,
+    });
+  } else {
+    console.log(
+      `[add-block] Verification failed, new block (hash: ${newBlock.hash}) rejected.`
+    );
+    res.json({
+      sender: nodeAddress,
+      status: `New block rejected`,
+    });
+  }
 });
 
 app.post("/register-and-broadcast", (req, res) => {
