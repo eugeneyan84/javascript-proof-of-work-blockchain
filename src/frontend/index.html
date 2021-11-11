@@ -63,11 +63,11 @@
 						</tr>
 						<tr>	
 							<td class="bold">Previous Hash</td>
-							<td>{{ block.previousBlockHash }}</td>
+							<td>{{ block.previousHash }}</td>
 						</tr>
 						<tr>	
 							<td class="bold">Number Transactions</td>
-							<td>{{ block.transactions.length }}</td>
+							<td>{{ block.txns.length }}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -79,36 +79,42 @@
 					<tbody>
 						<tr>	
 							<td class="bold">Sender</td>
-							<td>{{ transaction.sender }}</td>
+							<td>{{ transaction.senderAddress }}</td>
 						</tr>
 						<tr>	
 							<td class="bold">Recipient</td>
-							<td>{{ transaction.recipient }}</td>
+							<td>{{ transaction.recipientAddress }}</td>
 						</tr>
 						<tr>	
 							<td class="bold">Amount</td>
 							<td>{{ transaction.amount }}</td>
+						</tr>
+                        <tr>	
+							<td class="bold">Transaction Id</td>
+							<td>{{ transaction.txnId }}</td>
 						</tr>
 					</tbody>
 				</table>
 				<!-- end 'display transaction' table -->
 
 				<!-- 'display address' table -->
-				<h3 class="table-title" ng-if="addressData">Address</h3>
-				<p id="balance-text" ng-if="addressData">(Balance: {{ addressData.addressBalance }})</p>
+				<h3 class="table-title" ng-if="addressData">Address ({{ addressData.address }})</h3>
+				<p id="balance-text" ng-if="addressData">Balance: {{ addressData.balance }}</p>
 				<table class="table table-striped" ng-if="addressData">
 					<thead>
 						<tr>
 							<th scope="col">Sender</th>
 							<th scope="col">Recipient</th>
 							<th scope="col">Amount</th>
+                            <th scope="col">Transaction Id</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr ng-repeat="transaction in addressData.addressTransactions">
-							<td>{{ transaction.sender }}</td>
-							<td>{{ transaction.recipient }}</td>
+						<tr ng-repeat="transaction in addressData.transactions">
+							<td>{{ transaction.senderAddress }}</td>
+							<td>{{ transaction.recipientAddress }}</td>
 							<td>{{ transaction.amount }}</td>
+                            <td>{{ transaction.txnId }}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -147,8 +153,8 @@
 			$scope.fetchAddressData = function(address) {
 				$http.get(`/address/${address}`)
 				.then(response => {
-					$scope.addressData = response.data.addressData;
-					if (!$scope.addressData.addressTransactions.length) $scope
+					$scope.addressData = response.data;
+					if (!$scope.addressData.transactions.length) $scope
 						.addressData = null;
 					$scope.block = null;
 					$scope.transaction = null;
