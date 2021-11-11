@@ -371,7 +371,7 @@ app.get("/transaction/:txnId", (req, res) => {
 });
 
 app.get("/address/:address", (req, res) => {
-  const addressPattern = /^0x[\da-fA-F]+$/;
+  const addressPattern = /^(0x)?[\da-fA-F]+$/;
   const addressValue = req.params.address;
   if (addressPattern.test(addressValue)) {
     const queriedTxns = bc.getTxnsByAddress(addressValue);
