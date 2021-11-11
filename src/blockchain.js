@@ -2,10 +2,11 @@ const sha256 = require("sha256");
 const uuid = require("uuid");
 const currentNodeUrl = process.argv[3];
 
-function Blockchain() {
+function Blockchain(nodeAddress) {
   this.chain = []; // all mined blocks will be stored in the chain
   this.pendingTxns = []; // to contain all new txns before placed into a block for mining
   this.currentNodeUrl = currentNodeUrl;
+  this.currentNodeAddress = nodeAddress;
   this.nodeNetwork = [];
   this.createNewBlock(100, "0", "0"); // genesis block creation
 }

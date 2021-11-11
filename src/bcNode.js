@@ -12,7 +12,7 @@ const nodeAddress = uuid.v4().split("-").join("");
 console.log(`node-address: ${nodeAddress}`);
 var app = express();
 
-const bc = new Blockchain();
+const bc = new Blockchain(nodeAddress);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -272,9 +272,58 @@ app.post("/bulk-register", (req, res) => {
   res.json({ sender: nodeAddress, status: `Bulk registration successful` });
 });
 
-app.get("/self-validate", (req, res) =>{
+app.get("/self-validate", (req, res) => {
   const validationResult = bc.validate(bc.chain);
   res.json({sender: nodeAddress, status: `Validation outcome: ${validationResult}`});
+});
+
+app.get("/consensus", (req, res) => {
+  const promises = [];
+  console.log(`[consensus] Constructing blockchain request(s) to ${bc.nodeNetwork.length} node(s) in network.`);
+  bc.nodeNetwork.forEach(x => {
+    const reqOptions = {
+      uri: x + "/blockchain",
+      method: "GET",
+      json: true
+    };
+    promises.push(reqPromise(reqOptions));
+  });
+  console.log(`[consensus] Executing blockchain request(s) to ${promises.length} node(s) in network.`);
+  Promise.all(promises).then(resp => {
+    let currentMaxLength = bc.chain.length; // initialise current maximum length to be length of own chain first
+    let referenceChain = null; // placeholder to keep track of longest chain
+    let referencePendingTxns = null;
+    let referenceNodeAddress = null;
+    console.log(`[consensus] Examining all returned chains.`);
+    resp.forEach(x => {
+      console.log(`[consensus] Checking chain of node ${x.currentNodeAddress} (URL: ${x.currentNodeUrl})`);
+      if(x.chain.length > currentMaxLength) {
+        console.log(`[consensus] Longer chain detected in node ${x.currentNodeAddress} (URL: ${x.currentNodeUrl}), setting it as reference.`);
+        currentMaxLength = x.chain.length;
+        referenceChain = x.chain;
+        referencePendingTxns = x.pendingTxns;
+        referenceNodeAddress = x.currentNodeAddress;
+      }
+    });
+
+    if(referenceChain != null && bc.validate(referenceChain))
+    {
+      console.log(`[consensus] Reference chain (node ${referenceNodeAddress}) passed validation, replicating chain to current node.`);
+      bc.chain = referenceChain;
+      bc.pendingTxns = referencePendingTxns;
+      res.json({status: `Longer chain detected, current chain has been replaced.` });
+    }
+    else
+    {
+      if(referenceChain == null) {
+        console.log(`[consensus] Reference chain not detected, current chain not replaced.`);
+        res.json({status: `No longer chain detected, current chain not replaced.`});
+      } else {
+        console.log(`[consensus] Reference chain failed validation, current chain not replaced.`);
+        res.json({status: `Longer chain failed validation, current chain not replaced.`});
+      }
+    }
+  });
 });
 
 app.listen(API_PORT, () => {
