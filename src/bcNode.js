@@ -381,6 +381,10 @@ app.get("/address/:address", (req, res) => {
   }
 });
 
+app.get("/blockchain-explorer", (req, res) => {
+  res.sendFile("./frontend/index.html", { root: __dirname });
+});
+
 app.listen(API_PORT, () => {
   console.log(`Listening on port ${API_PORT}...`);
 });
