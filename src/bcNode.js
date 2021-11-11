@@ -326,6 +326,12 @@ app.get("/consensus", (req, res) => {
   });
 });
 
+app.get("/block/:hash", (req, res) => {});
+
+app.get("/transaction/:txnId", (req, res) => {});
+
+app.get("/address/:address", (req, res) => {});
+
 app.listen(API_PORT, () => {
   console.log(`Listening on port ${API_PORT}...`);
 });
