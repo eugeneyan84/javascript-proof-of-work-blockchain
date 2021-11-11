@@ -355,11 +355,20 @@ app.get("/block/:hash", (req, res) => {
     const queriedBlock = bc.retrieveBlock(hash);
     res.json({ block: queriedBlock });
   } else {
-    res.json({ status: `Invalid hash value.` });
+    res.json({ status: `Invalid block-hash value.` });
   }
 });
 
-app.get("/transaction/:txnId", (req, res) => {});
+app.get("/transaction/:txnId", (req, res) => {
+  const hashPattern = /^[\da-fA-F]+$/;
+  const txnId = req.params.txnId;
+  if (hashPattern.test(txnId)) {
+    const queriedTxn = bc.retrieveTxn(txnId);
+    res.json({ transaction: queriedTxn });
+  } else {
+    res.json({ status: `Invalid transaction-hash value.` });
+  }
+});
 
 app.get("/address/:address", (req, res) => {});
 

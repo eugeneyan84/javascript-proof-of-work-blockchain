@@ -113,12 +113,12 @@ Blockchain.prototype.validate = function (chain) {
     return validationResult;
 };
 
-Blockchain.prototype.retrieveBlock = function(hash) {
+Blockchain.prototype.retrieveBlock = function(blockHash) {
     let queriedBlock = null;
     for(let x of this.chain)
     {
         console.log(`[Blockchain.retrieveBlock] current block hash: ${x.hash}`);
-        if(x.hash === hash)
+        if(x.hash === blockHash)
         {
             console.log(`[Blockchain.retrieveBlock] Block hash match found.`);
             queriedBlock = x;
@@ -127,5 +127,27 @@ Blockchain.prototype.retrieveBlock = function(hash) {
     }
     return queriedBlock;
 };
+
+Blockchain.prototype.retrieveTxn = function(txnId) {
+    let queriedTxn = null;
+    for(let x of this.chain)
+    {
+        console.log(`[Blockchain.retrieveBlock] current block hash: ${x.hash}`);
+        for(let y of x.txns)
+        {
+            if(y.txnId === txnId)
+            {
+                console.log(`[Blockchain.retrieveTxn] Transaction-id match found.`);
+                queriedTxn = y;
+                break;
+            }
+        }
+        if(queriedTxn != null)
+        {
+            break;
+        }
+    }
+    return queriedTxn;
+}
 
 module.exports = Blockchain;
