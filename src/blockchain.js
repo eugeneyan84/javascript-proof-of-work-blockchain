@@ -40,15 +40,15 @@ Blockchain.prototype.createNewTxn = function (
     amount: txnAmt,
     senderAddress: senderAddress,
     recipientAddress: recipientAddress,
-    txnId: uuid.v4().split("-").join("")
+    txnId: uuid.v4().split("-").join(""),
   };
 
   return newTxn;
 };
 
-Blockchain.prototype.addTxn = function(txn) {
-    this.pendingTxns.push(txn);  // append new transaction into existing transactions array
-    return this.getLastBlock()["index"] + 1;
+Blockchain.prototype.addTxn = function (txn) {
+  this.pendingTxns.push(txn); // append new transaction into existing transactions array
+  return this.getLastBlock()["index"] + 1;
 };
 
 Blockchain.prototype.hashBlock = function (
@@ -75,79 +75,121 @@ Blockchain.prototype.mine = function (previousBlockHash, currentBlockData) {
 };
 
 Blockchain.prototype.validate = function (chain) {
-    let validationResult = true;
+  let validationResult = true;
 
-    const genesisBlock = chain[0];
-    if(genesisBlock.hash !== '0' || genesisBlock.nonce !== 100 || genesisBlock.previousHash !== '0')
-    {
-        console.log(`[Blockchain.selfValidate] Genesis Block validation failed (hash: ${genesisBlock.hash}, nonce: ${genesisBlock.nonce}, previousHash: ${genesisBlock.previousHash})`);
-        validationResult =  false;
-    } else
-    {
-        console.log(`[Blockchain.selfValidate] Genesis Block validation passed, proceeding to validate the rest of the chain.`);
-        for(var index = 1; index < chain.length; index++)
-        {
-            const currentBlock = chain[index];
-            const previousBlock = chain[index-1];
-    
-            if(currentBlock.previousHash !== previousBlock.hash)
-            {
-                console.log(`[Blockchain.selfValidate] Block (index: ${currentBlock.index}, previousHash: ${currentBlock.previousHash}) previousHash mismatch with previous block (hash: ${previousBlock.hash})`);
-                validationResult =  false;
-                break;
-            }
-    
-            const reconstructedCurrentBlockData = {txns: currentBlock.txns, index: currentBlock.index};
-            const computedHashValue = this.hashBlock(previousBlock.hash, reconstructedCurrentBlockData, currentBlock.nonce);
-            if(computedHashValue.substring(0, 4) !== '0000')
-            {
-                console.log(`[Blockchain.selfValidate] Block (index: ${currentBlock.index}) recomputed hash (${computedHashValue}) failed validation`);
-                validationResult =  false;
-                break;
-            }
-        }
+  const genesisBlock = chain[0];
+  if (
+    genesisBlock.hash !== "0" ||
+    genesisBlock.nonce !== 100 ||
+    genesisBlock.previousHash !== "0"
+  ) {
+    console.log(
+      `[Blockchain.selfValidate] Genesis Block validation failed (hash: ${genesisBlock.hash}, nonce: ${genesisBlock.nonce}, previousHash: ${genesisBlock.previousHash})`
+    );
+    validationResult = false;
+  } else {
+    console.log(
+      `[Blockchain.selfValidate] Genesis Block validation passed, proceeding to validate the rest of the chain.`
+    );
+    for (var index = 1; index < chain.length; index++) {
+      const currentBlock = chain[index];
+      const previousBlock = chain[index - 1];
+
+      if (currentBlock.previousHash !== previousBlock.hash) {
+        console.log(
+          `[Blockchain.selfValidate] Block (index: ${currentBlock.index}, previousHash: ${currentBlock.previousHash}) previousHash mismatch with previous block (hash: ${previousBlock.hash})`
+        );
+        validationResult = false;
+        break;
+      }
+
+      const reconstructedCurrentBlockData = {
+        txns: currentBlock.txns,
+        index: currentBlock.index,
+      };
+      const computedHashValue = this.hashBlock(
+        previousBlock.hash,
+        reconstructedCurrentBlockData,
+        currentBlock.nonce
+      );
+      if (computedHashValue.substring(0, 4) !== "0000") {
+        console.log(
+          `[Blockchain.selfValidate] Block (index: ${currentBlock.index}) recomputed hash (${computedHashValue}) failed validation`
+        );
+        validationResult = false;
+        break;
+      }
     }
+  }
 
-    console.log(`[Blockchain.selfValidate] Chain validation completed, outcome: ${validationResult}`);
+  console.log(
+    `[Blockchain.selfValidate] Chain validation completed, outcome: ${validationResult}`
+  );
 
-    return validationResult;
+  return validationResult;
 };
 
-Blockchain.prototype.retrieveBlock = function(blockHash) {
-    let queriedBlock = null;
-    for(let x of this.chain)
-    {
-        console.log(`[Blockchain.retrieveBlock] current block hash: ${x.hash}`);
-        if(x.hash === blockHash)
-        {
-            console.log(`[Blockchain.retrieveBlock] Block hash match found.`);
-            queriedBlock = x;
-            break;
-        }
+Blockchain.prototype.retrieveBlock = function (blockHash) {
+  let queriedBlock = null;
+  for (let x of this.chain) {
+    console.log(`[Blockchain.retrieveBlock] current block hash: ${x.hash}`);
+    if (x.hash === blockHash) {
+      console.log(`[Blockchain.retrieveBlock] Block hash match found.`);
+      queriedBlock = x;
+      break;
     }
-    return queriedBlock;
+  }
+  return queriedBlock;
 };
 
-Blockchain.prototype.retrieveTxn = function(txnId) {
-    let queriedTxn = null;
-    for(let x of this.chain)
-    {
-        console.log(`[Blockchain.retrieveBlock] current block hash: ${x.hash}`);
-        for(let y of x.txns)
-        {
-            if(y.txnId === txnId)
-            {
-                console.log(`[Blockchain.retrieveTxn] Transaction-id match found.`);
-                queriedTxn = y;
-                break;
-            }
-        }
-        if(queriedTxn != null)
-        {
-            break;
-        }
+Blockchain.prototype.retrieveTxn = function (txnId) {
+  let queriedTxn = null;
+  for (let x of this.chain) {
+    console.log(`[Blockchain.retrieveBlock] current block hash: ${x.hash}`);
+    for (let y of x.txns) {
+      if (y.txnId === txnId) {
+        console.log(`[Blockchain.retrieveTxn] Transaction-id match found.`);
+        queriedTxn = y;
+        break;
+      }
     }
-    return queriedTxn;
-}
+    if (queriedTxn != null) {
+      break;
+    }
+  }
+  return queriedTxn;
+};
+
+Blockchain.prototype.getTxnsByAddress = function (addressValue) {
+  let txns = [];
+  for (let x of this.chain) {
+    console.log(`[Blockchain.retrieveBlock] current block hash: ${x.hash}`);
+    for (let y of x.txns) {
+      if (
+        y.senderAddress === addressValue ||
+        y.recipientAddress === addressValue
+      ) {
+        console.log(`[Blockchain.retrieveTxn] Address match found.`);
+        txns.push(y);
+      }
+    }
+  }
+  let balance = 0;
+  txns.forEach((x) => {
+    if (
+      x.recipientAddress === addressValue &&
+      x.senderAddress !== addressValue
+    ) {
+      balance += x.amount;
+    } else if (
+      x.recipientAddress !== addressValue &&
+      x.senderAddress === addressValue
+    ) {
+      balance -= x.amount;
+    }
+  });
+
+  return { address: addressValue, transactions: txns, balance: balance };
+};
 
 module.exports = Blockchain;

@@ -370,7 +370,16 @@ app.get("/transaction/:txnId", (req, res) => {
   }
 });
 
-app.get("/address/:address", (req, res) => {});
+app.get("/address/:address", (req, res) => {
+  const addressPattern = /^0x[\da-fA-F]+$/;
+  const addressValue = req.params.address;
+  if (addressPattern.test(addressValue)) {
+    const queriedTxns = bc.getTxnsByAddress(addressValue);
+    res.json({ ...queriedTxns });
+  } else {
+    res.json({ status: `Invalid address value.` });
+  }
+});
 
 app.listen(API_PORT, () => {
   console.log(`Listening on port ${API_PORT}...`);
