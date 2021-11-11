@@ -113,4 +113,19 @@ Blockchain.prototype.validate = function (chain) {
     return validationResult;
 };
 
+Blockchain.prototype.retrieveBlock = function(hash) {
+    let queriedBlock = null;
+    for(let x of this.chain)
+    {
+        console.log(`[Blockchain.retrieveBlock] current block hash: ${x.hash}`);
+        if(x.hash === hash)
+        {
+            console.log(`[Blockchain.retrieveBlock] Block hash match found.`);
+            queriedBlock = x;
+            break;
+        }
+    }
+    return queriedBlock;
+};
+
 module.exports = Blockchain;
