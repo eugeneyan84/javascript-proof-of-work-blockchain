@@ -23,9 +23,9 @@ $ git clone https://github.com/eugeneyan84/javascript-proof-of-work-blockchain.g
 ```
 2. Navigate into the project folder:
 ```bash
-$ cd bc-js-v0
+$ cd javascript-proof-of-work-blockchain
 ```
-3. Install all the required libraries specified in the [package.json](https://github.com/eugeneyan84/bc-js-v0/blob/main/package.json):
+3. Install all the required libraries specified in the [package.json](https://github.com/eugeneyan84/javascript-proof-of-work-blockchain/blob/main/package.json):
 ```bash
 $ npm install
 ```
@@ -33,7 +33,7 @@ $ npm install
 ```bash
 $ npm run bc_node1
 ```
-5. While the above is sufficient for sending transactions and mining blocks to a single node, several nodes can be started up in separate terminals using the same command format as step #4, but with different script names, i.e. `bc_node2`, `bc_node3` and `bc_node4`. You will see these names defined in the scripts sub-section of the [package.json](https://github.com/eugeneyan84/bc-js-v0/blob/main/package.json).
+5. While the above is sufficient for sending transactions and mining blocks to a single node, several nodes can be started up in separate terminals using the same command format as step #4, but with different script names, i.e. `bc_node2`, `bc_node3` and `bc_node4`. You will see these names defined in the scripts sub-section of the [package.json](https://github.com/eugeneyan84/javascript-proof-of-work-blockchain/blob/main/package.json).
 
 ## API Endpoints
 This project was developed to be run locally, hence the endpoints are accessed via http://localhost:{port}, where the port of the node #1 is 5001, up to the last node #4 which is 5004.

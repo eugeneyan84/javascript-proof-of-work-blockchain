@@ -1,7 +1,7 @@
 {
-  "name": "bc-js-v0",
+  "name": "javascript-proof-of-work-blockchain",
   "version": "1.0.0",
-  "description": "",
+  "description": "Simple javascript-based blockchain using proof-of-work mechanism",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,7 +11,7 @@
     "bc_node4": "nodemon --watch src -e js src/bcNode.js 5004 http://localhost:5004",
     "bc_node5": "nodemon --watch src -e js src/bcNode.js 5005 http://localhost:5005"
   },
-  "author": "eugene_yan",
+  "author": "eugene",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
