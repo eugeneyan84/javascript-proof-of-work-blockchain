@@ -1,4 +1,4 @@
-# JavaScript Blockchain using proof-of-work mechanism
+# JavaScript proof-of-work Blockchain
 
 ## Background
 This project is primarily a demonstration of a simplistic blockchain platform using JavaScript. It serves as a basis to understand the fundamentals of maintaining and growing a decentralised ledger of transactions that is secured by cryptographic principles, as well as the inner workings of the proof-of-work protocol. Actions to be executed on a node are facilitated via HTTP requests, with endpoints built out using Express.
@@ -19,7 +19,7 @@ The following must be installed in order to run this project:
 ## Setup
 1. Clone this repository:
 ```bash
-$ git clone https://github.com/eugeneyan84/bc-js-v0.git
+$ git clone https://github.com/eugeneyan84/javascript-proof-of-work-blockchain.git
 ```
 2. Navigate into the project folder:
 ```bash
