@@ -74,6 +74,23 @@ Blockchain.prototype.mine = function (previousBlockHash, currentBlockData) {
   return nonce;
 };
 
+Blockchain.prototype.validateProofOfWork = function(newBlockData) {
+  console.log('[Blockchain.validateProofOfWork] start')
+  const previousBlock = this.getLastBlock()
+  const newBlock = { txns: newBlockData.txns, index: newBlockData.index };
+  console.log(newBlock)
+  const computedHashValue = this.hashBlock(previousBlock.hash, newBlock, newBlockData.nonce)
+  
+  console.log(`[Blockchain.validateProofOfWork] expected hash: ${computedHashValue}`)
+  console.log(`[Blockchain.validateProofOfWork]   actual hash: ${newBlockData.hash}`)
+  console.log(`[Blockchain.validateProofOfWork]  actual nonce: ${newBlockData.nonce}`)
+
+  const outcome = computedHashValue.substring(0, 4) == "0000" && computedHashValue == newBlockData.hash
+  console.log(`[Blockchain.validateProofOfWork] outcome: ${outcome}`)
+
+  return outcome
+};
+
 Blockchain.prototype.validate = function (chain) {
   let validationResult = true;
 

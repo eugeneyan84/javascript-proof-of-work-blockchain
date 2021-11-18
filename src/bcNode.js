@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.get("/blockchain", (req, res) => {
-  res.send(bc); // just return the whole chain
+  res.send(bc); // just return the whole blockchain (chain, pending txns, node address book)
 });
 
 app.post("/transaction", (req, res) => {
@@ -91,7 +91,6 @@ app.get("/mine", (req, res) => {
   console.log(
     `[mine] Attached new block (hash: ${newBlockHash}) to curent chain.`
   );
-  // #7: reward node for successfully mining new block
 
   const promises = [];
   bc.nodeNetwork.forEach((x) => {
@@ -137,21 +136,23 @@ app.get("/mine", (req, res) => {
 app.post("/add-block", (req, res) => {
   // get new block
   const newBlock = req.body.newBlock;
-  console.log(`[add-block] New block received (hash: ${newBlock.hash})`);
+  console.log(`[add-block] New block received (index: ${newBlock.index}, txn-count: ${newBlock.txns.length}, hash: ${newBlock.hash})`);
   // retrieve last block in current node's chain
   const lastBlock = bc.getLastBlock();
+  const isProofOfWorkValid = bc.validateProofOfWork(newBlock)
 
   console.log(`[add-block] newBlock.previousHash: ${newBlock.previousHash}`);
   console.log(`[add-block]        lastBlock.hash: ${lastBlock.hash}`);
-  console.log(`[add-block]  newBlock.index: ${newBlock.index}`);
-  console.log(`[add-block] lastBlock.index: ${lastBlock.index}`);
+  console.log(`[add-block]        newBlock.index: ${newBlock.index}`);
+  console.log(`[add-block]       lastBlock.index: ${lastBlock.index}`);
 
   // if previous block's hash matches current block's previous-hash value,
   // and current block's index matches previous block's index + 1, then push
   // new block into chain
   if (
     newBlock.previousHash === lastBlock.hash &&
-    newBlock.index === lastBlock.index + 1
+    newBlock.index === lastBlock.index + 1 &&
+    isProofOfWorkValid
   ) {
     console.log(
       `[add-block] Verification passed, new block (hash: ${newBlock.hash}) pushed into chain`
@@ -282,10 +283,10 @@ app.get("/self-validate", (req, res) => {
   });
 });
 
-app.get("/consensus", (req, res) => {
+app.get("/sync-chain", (req, res) => {
   const promises = [];
   console.log(
-    `[consensus] Constructing blockchain request(s) to ${bc.nodeNetwork.length} node(s) in network.`
+    `[sync-chain] Constructing blockchain request(s) to ${bc.nodeNetwork.length} node(s) in network.`
   );
   bc.nodeNetwork.forEach((x) => {
     const reqOptions = {
@@ -296,21 +297,21 @@ app.get("/consensus", (req, res) => {
     promises.push(reqPromise(reqOptions));
   });
   console.log(
-    `[consensus] Executing blockchain request(s) to ${promises.length} node(s) in network.`
+    `[sync-chain] Executing blockchain request(s) to ${promises.length} node(s) in network.`
   );
   Promise.all(promises).then((resp) => {
     let currentMaxLength = bc.chain.length; // initialise current maximum length to be length of own chain first
     let referenceChain = null; // placeholder to keep track of longest chain
     let referencePendingTxns = null;
     let referenceNodeAddress = null;
-    console.log(`[consensus] Examining all returned chains.`);
+    console.log(`[sync-chain] Examining all returned chains.`);
     resp.forEach((x) => {
       console.log(
-        `[consensus] Checking chain of node ${x.currentNodeAddress} (URL: ${x.currentNodeUrl})`
+        `[sync-chain] Checking chain of node ${x.currentNodeAddress} (URL: ${x.currentNodeUrl})`
       );
       if (x.chain.length > currentMaxLength) {
         console.log(
-          `[consensus] Longer chain detected in node ${x.currentNodeAddress} (URL: ${x.currentNodeUrl}), setting it as reference.`
+          `[sync-chain] Longer chain detected in node ${x.currentNodeAddress} (URL: ${x.currentNodeUrl}), setting it as reference.`
         );
         currentMaxLength = x.chain.length;
         referenceChain = x.chain;
@@ -321,7 +322,7 @@ app.get("/consensus", (req, res) => {
 
     if (referenceChain != null && bc.validate(referenceChain)) {
       console.log(
-        `[consensus] Reference chain (node ${referenceNodeAddress}) passed validation, replicating chain to current node.`
+        `[sync-chain] Reference chain (node ${referenceNodeAddress}) passed validation, replicating chain to current node.`
       );
       bc.chain = referenceChain;
       bc.pendingTxns = referencePendingTxns;
@@ -331,14 +332,14 @@ app.get("/consensus", (req, res) => {
     } else {
       if (referenceChain == null) {
         console.log(
-          `[consensus] Reference chain not detected, current chain not replaced.`
+          `[sync-chain] Reference chain not detected, current chain not replaced.`
         );
         res.json({
           status: `No longer chain detected, current chain not replaced.`,
         });
       } else {
         console.log(
-          `[consensus] Reference chain failed validation, current chain not replaced.`
+          `[sync-chain] Reference chain failed validation, current chain not replaced.`
         );
         res.json({
           status: `Longer chain failed validation, current chain not replaced.`,
